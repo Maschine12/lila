@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import FlorAmarilla from './FlorAmarilla';
 import FlorRosada from './FlorRosada';
 import { PERSONALIZATION } from '../types/contants';
@@ -14,7 +14,115 @@ interface CartaProps {
 }
 
 const Carta: React.FC<CartaProps> = ({ showCarta, audioElement, isMuted, setIsMuted, onRestart }) => {
+  const [viewportData, setViewportData] = useState({
+    width: 0,
+    height: 0,
+    availableHeight: 0,
+    devicePixelRatio: 1,
+    isMobile: false
+  });
+
+  // Detectar viewport específico del dispositivo
+  useEffect(() => {
+    const updateViewport = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const availableHeight = window.screen.availHeight || height;
+      const devicePixelRatio = window.devicePixelRatio || 1;
+      const isMobile = width <= 768;
+
+      setViewportData({
+        width,
+        height,
+        availableHeight,
+        devicePixelRatio,
+        isMobile
+      });
+    };
+
+    updateViewport();
+    window.addEventListener('resize', updateViewport);
+    window.addEventListener('orientationchange', updateViewport);
+
+    return () => {
+      window.removeEventListener('resize', updateViewport);
+      window.removeEventListener('orientationchange', updateViewport);
+    };
+  }, []);
+
   if (!showCarta) return null;
+
+  // Función para calcular tamaño de fuente: MENOS TEXTO = LETRA MÁS GRANDE
+  const getAdaptiveFontSizeForParagraph = (text: string, paragraphType: string) => {
+    const { width, height, devicePixelRatio, isMobile } = viewportData;
+    const textLength = text.length;
+
+    // Factor de escala basado en viewport
+    const baseViewportWidth = 375;
+    const scaleFactor = Math.max(0.8, Math.min(1.5, width / baseViewportWidth));
+
+    // Configuración por tipo de párrafo con enfoque en MENOS TEXTO = MÁS GRANDE
+    const paragraphConfig = {
+      title: {
+        baseSize: isMobile ? 28 : 42,
+        minSize: isMobile ? 20 : 28,
+        maxSize: isMobile ? 36 : 52,
+        // Umbrales de longitud: texto muy corto a muy largo
+        lengthBreakpoints: [20, 40, 80],
+        // Multiplicadores: texto corto = grande, texto largo = pequeño
+        sizeMultipliers: [1.3, 1.1, 0.9, 0.7]
+      },
+      message: {
+        baseSize: isMobile ? 22 : 34,
+        minSize: isMobile ? 16 : 22,
+        maxSize: isMobile ? 30 : 42,
+        // Para mensajes: basado en análisis real (mensaje1=197chars, mensaje2=100chars)
+        lengthBreakpoints: [50, 100, 150],
+        sizeMultipliers: [1.5, 1.2, 1.0, 0.7]
+      },
+      signature: {
+        baseSize: isMobile ? 22 : 36,
+        minSize: isMobile ? 16 : 24,
+        maxSize: isMobile ? 30 : 44,
+        lengthBreakpoints: [15, 25, 40],
+        sizeMultipliers: [1.5, 1.3, 1.1, 0.9]
+      },
+      sender: {
+        baseSize: isMobile ? 18 : 30,
+        minSize: isMobile ? 14 : 22,
+        maxSize: isMobile ? 24 : 38,
+        lengthBreakpoints: [10, 20, 35],
+        sizeMultipliers: [1.4, 1.2, 1.0, 0.8]
+      }
+    };
+
+    const config = paragraphConfig[paragraphType as keyof typeof paragraphConfig] || paragraphConfig.message;
+
+    // Determinar multiplicador basado en longitud: MENOS TEXTO = MULTIPLICADOR MAYOR
+    let sizeMultiplier = config.sizeMultipliers[config.sizeMultipliers.length - 1]; // Último (más pequeño)
+
+    for (let i = 0; i < config.lengthBreakpoints.length; i++) {
+      if (textLength <= config.lengthBreakpoints[i]) {
+        sizeMultiplier = config.sizeMultipliers[i]; // Primer match = texto más corto = multiplicador mayor
+        break;
+      }
+    }
+
+    // Calcular tamaño final
+    let finalSize = config.baseSize * sizeMultiplier * scaleFactor;
+
+    // Aplicar límites
+    finalSize = Math.max(config.minSize, Math.min(config.maxSize, finalSize));
+
+    // Ajuste por densidad de píxeles
+    const dprAdjustment = devicePixelRatio > 2 ? 0.95 : 1;
+    finalSize = Math.round(finalSize * dprAdjustment);
+
+    return {
+      fontSize: `${finalSize}px`,
+      lineHeight: paragraphType === 'title' ? '1.2' : '1.4'
+    };
+  };
 
   const toggleMute = () => {
     if (audioElement) {
@@ -32,126 +140,114 @@ const Carta: React.FC<CartaProps> = ({ showCarta, audioElement, isMuted, setIsMu
   };
 
   return (
-    <div className="flex justify-center items-center w-full min-h-screen p-4 fixed inset-0 z-50 bg-black/30 backdrop-blur-md animate-fade-in sm:p-4 lg:p-6 overflow-auto">
-      {/* Contenedor adaptativo - móvil vs desktop */}
-      <div className="relative w-full h-auto my-auto
-        max-w-sm aspect-[3/4] sm:max-w-md sm:aspect-[3/4]
-        md:max-w-lg md:aspect-[3/4]
-        lg:max-w-2xl lg:aspect-auto lg:max-h-[90vh] lg:min-h-[600px]
-        xl:max-w-3xl xl:max-h-[85vh] xl:min-h-[700px]
-        bg-gradient-to-br from-yellow-50 via-rose-50 to-orange-50 
-        rounded-[2rem] sm:rounded-[2.5rem] lg:rounded-[3rem] 
-        shadow-2xl border-4 border-yellow-200/50 
-        p-8 sm:p-10 md:p-10 lg:p-12 xl:p-16
-        animate-scale-in min-h-[600px] sm:min-h-[700px] md:min-h-[750px]" 
-        style={{ overflow: 'visible' }}>
+    <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-md animate-fade-in flex items-center justify-center">
+      {/* Contenedor adaptativo sin scroll */}
+      <div className="relative w-[95vw] h-[95vh] max-w-4xl
+        bg-gradient-to-br from-yellow-50 via-rose-50 to-orange-50
+        rounded-2xl md:rounded-3xl
+        shadow-2xl border-4 border-yellow-200/50
+        animate-scale-in overflow-hidden
+        flex flex-col">
 
-        {/* Marco decorativo con flores - más grandes en móvil */}
-        <div className="absolute top-4 left-4 animate-float z-5">
-          <FlorAmarilla size={40} className="sm:size-[45px] lg:scale-125" />
+        {/* Marco decorativo optimizado - solo en desktop */}
+        <div className="hidden md:block absolute top-6 left-6 animate-float z-5">
+          <FlorAmarilla size={32} />
         </div>
-        <div className="absolute top-4 right-4 animate-float delay-200 z-5">
-          <FlorRosada size={38} className="sm:size-[42px] lg:scale-125" />
+        <div className="hidden md:block absolute top-6 right-6 animate-float delay-200 z-5">
+          <FlorRosada size={30} />
         </div>
-        <div className="absolute bottom-4 left-4 animate-float delay-400 z-5">
-          <FlorRosada size={42} className="sm:size-[48px] lg:scale-125" />
+        <div className="hidden md:block absolute bottom-6 left-6 animate-float delay-400 z-5">
+          <FlorRosada size={34} />
         </div>
-        <div className="absolute bottom-4 right-4 animate-float delay-600 z-5">
-          <FlorAmarilla size={40} className="sm:size-[44px] lg:scale-125" />
+        <div className="hidden md:block absolute bottom-6 right-6 animate-float delay-600 z-5">
+          <FlorAmarilla size={32} />
         </div>
 
-        {/* Flores laterales medianas - más grandes en móvil */}
-        <div className="absolute top-1/4 left-2 animate-float delay-300 z-5">
-          <FlorRosada size={30} className="sm:size-[32px] lg:scale-110" />
+        {/* Flores laterales solo en pantallas grandes */}
+        <div className="hidden lg:block absolute top-1/4 left-3 animate-float delay-300 z-5">
+          <FlorRosada size={24} />
         </div>
-        <div className="absolute top-1/4 right-2 animate-float delay-500 z-5">
-          <FlorAmarilla size={28} className="sm:size-[30px] lg:scale-110" />
+        <div className="hidden lg:block absolute top-1/4 right-3 animate-float delay-500 z-5">
+          <FlorAmarilla size={22} />
         </div>
-        <div className="absolute bottom-1/4 left-2 animate-float delay-700 z-5">
-          <FlorAmarilla size={32} className="sm:size-[34px] lg:scale-110" />
+        <div className="hidden lg:block absolute bottom-1/4 left-3 animate-float delay-700 z-5">
+          <FlorAmarilla size={26} />
         </div>
-        <div className="absolute bottom-1/4 right-2 animate-float delay-900 z-5">
-          <FlorRosada size={30} className="sm:size-[31px] lg:scale-110" />
-        </div>
-
-        {/* Flores superiores e inferiores - restauradas para móvil */}
-        <div className="absolute top-2 left-1/4 animate-float delay-100 z-5">
-          <FlorAmarilla size={20} className="sm:size-[22px]" />
-        </div>
-        <div className="absolute top-2 right-1/4 animate-float delay-800 z-5">
-          <FlorRosada size={18} className="sm:size-[20px]" />
-        </div>
-        <div className="absolute bottom-2 left-1/4 animate-float delay-1100 z-5">
-          <FlorRosada size={22} className="sm:size-[24px]" />
-        </div>
-        <div className="absolute bottom-2 right-1/4 animate-float delay-1400 z-5">
-          <FlorAmarilla size={20} className="sm:size-[21px]" />
-        </div>
-
-        {/* Flores centro-laterales */}
-        <div className="absolute top-1/2 left-1 animate-float delay-1600 z-5 transform -translate-y-1/2">
-          <FlorRosada size={26} className="sm:size-[28px]" />
-        </div>
-        <div className="absolute top-1/2 right-1 animate-float delay-1800 z-5 transform -translate-y-1/2">
-          <FlorAmarilla size={24} className="sm:size-[26px]" />
+        <div className="hidden lg:block absolute bottom-1/4 right-3 animate-float delay-900 z-5">
+          <FlorRosada size={24} />
         </div>
 
         {/* Elementos decorativos adaptados */}
-        <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/20 via-transparent to-rose-100/20 rounded-[2rem] sm:rounded-[2.5rem] lg:rounded-[3rem]"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/20 via-transparent to-rose-100/20 rounded-2xl md:rounded-3xl"></div>
         
-        {/* Contenido principal - optimizado para móvil y desktop */}
-        <div className="relative z-10 text-center h-full flex flex-col justify-center space-y-6 sm:space-y-8 md:space-y-8 lg:space-y-10 py-6 sm:py-8 lg:py-8 px-4 sm:px-6 lg:px-6">
+        {/* Contenido principal - optimizado sin scroll */}
+        <div className="relative z-10 text-center flex-1 flex flex-col justify-center p-4 md:p-8 space-y-4 md:space-y-6">
           
-          {/* Título - más grande en móvil, controlado en desktop */}
-            <h1 className="text-4xl sm:text-5xl md:text-4xl lg:text-5xl xl:text-6xl font-bold bg-gradient-to-r from-rose-600 via-yellow-500 to-orange-500 bg-clip-text text-transparent mb-4 sm:mb-6 md:mb-4 lg:mb-6 drop-shadow-sm leading-tight">
-              {PERSONALIZATION.title}
-            </h1>
+          {/* Título con tamaño adaptativo por viewport */}
+          <h1
+            className="font-bold bg-gradient-to-r from-rose-600 via-yellow-500 to-orange-500 bg-clip-text text-transparent drop-shadow-sm"
+            style={getAdaptiveFontSizeForParagraph(PERSONALIZATION.title, 'title')}
+          >
+            {PERSONALIZATION.title}
+          </h1>
             
-          {/* Mensaje principal - más grande en móvil */}
+          {/* Mensaje principal responsive */}
           <div className="animate-slide-up delay-300 flex-1 flex flex-col justify-center">
-            <div className="bg-white/40 backdrop-blur-sm rounded-2xl p-6 sm:p-8 md:p-6 lg:p-8 shadow-lg border border-yellow-200/30 max-w-prose mx-auto">
-              <p className="text-gray-800 leading-relaxed text-lg sm:text-xl md:text-lg lg:text-xl xl:text-2xl font-medium">
+            <div className="bg-white/40 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg border border-yellow-200/30 mx-auto">
+              <p
+                className="text-gray-800 font-medium"
+                style={getAdaptiveFontSizeForParagraph(PERSONALIZATION.message.first, 'message')}
+              >
                 {PERSONALIZATION.message.first}
               </p>
-              <p className="text-gray-700 leading-relaxed text-lg sm:text-xl md:text-lg lg:text-xl xl:text-2xl font-medium mt-4">
+              <p
+                className="text-gray-700 font-medium mt-2 md:mt-4"
+                style={getAdaptiveFontSizeForParagraph(PERSONALIZATION.message.second, 'message')}
+              >
                 {PERSONALIZATION.message.second}
               </p>
             </div>
           </div>
           
-          {/* Firma - más grande en móvil */}
+          {/* Firma responsive */}
           <div className="animate-fade-in delay-900">
-            <div className="bg-gradient-to-r from-yellow-100/50 via-rose-100/50 to-orange-100/50 rounded-2xl p-6 sm:p-8 md:p-6 lg:p-8 border border-yellow-300/40 shadow-md">
-              <p className="text-yellow-800 font-bold italic text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl">
+            <div className="bg-gradient-to-r from-yellow-100/50 via-rose-100/50 to-orange-100/50 rounded-xl md:rounded-2xl p-4 md:p-6 border border-yellow-300/40 shadow-md">
+              <p
+                className="text-yellow-800 font-bold italic"
+                style={getAdaptiveFontSizeForParagraph(PERSONALIZATION.signature, 'signature')}
+              >
                 {PERSONALIZATION.signature}
               </p>
-              <p className="text-yellow-700 font-medium text-lg sm:text-xl md:text-lg lg:text-xl mt-2">
+              <p
+                className="text-yellow-700 font-medium mt-1 md:mt-2"
+                style={getAdaptiveFontSizeForParagraph(PERSONALIZATION.sender, 'sender')}
+              >
                 - {PERSONALIZATION.sender}
               </p>
-              <div className="w-full h-px bg-gradient-to-r from-transparent via-yellow-400 to-transparent mt-4 sm:mt-6 md:mt-4 lg:mt-6"></div>
+              <div className="w-full h-px bg-gradient-to-r from-transparent via-yellow-400 to-transparent mt-2 md:mt-4"></div>
             </div>
           </div>
 
-          {/* Flores giratorias - más grandes en móvil */}
+          {/* Flores giratorias responsive */}
           <div className="animate-fade-in delay-1200">
-            <div className="flex justify-center items-center space-x-6 sm:space-x-8 md:space-x-6 lg:space-x-8 mt-4 sm:mt-6 md:mt-4 lg:mt-6">
+            <div className="flex justify-center items-center space-x-4 md:space-x-6">
               <div className="animate-spin-slow">
-                <FlorRosada size={45} className="sm:size-[50px] lg:scale-110" />
+                <FlorRosada size={30} className="sm:w-9 sm:h-9 md:w-12 md:h-12" />
               </div>
               <div className="animate-spin-slow" style={{ animationDirection: 'reverse', animationDelay: '0.5s' }}>
-                <FlorAmarilla size={50} className="sm:size-[55px] lg:scale-110" />
+                <FlorAmarilla size={35} className="sm:w-10 sm:h-10 md:w-14 md:h-14" />
               </div>
               <div className="animate-spin-slow" style={{ animationDelay: '1s' }}>
-                <FlorRosada size={42} className="sm:size-[48px] lg:scale-110" />
+                <FlorRosada size={28} className="sm:w-8 sm:h-8 md:w-11 md:h-11" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Botones en posiciones fijas - más grandes en móvil */}
+        {/* Botones responsive */}
         <button
           onClick={handleRestart}
-          className="absolute top-4 left-4 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full p-3 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95 z-20"
+          className="absolute top-2 left-2 md:top-4 md:left-4 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full p-2 md:p-3 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95 z-20"
           aria-label="Reiniciar aplicación"
         >
           <svg
@@ -181,7 +277,7 @@ const Carta: React.FC<CartaProps> = ({ showCarta, audioElement, isMuted, setIsMu
 
         <button
           onClick={toggleMute}
-          className="absolute top-4 right-4 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full p-3 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95 z-20"
+          className="absolute top-2 right-2 md:top-4 md:right-4 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full p-2 md:p-3 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95 z-20"
           aria-label={isMuted ? "Activar sonido" : "Silenciar sonido"}
         >
           <div className="relative">
@@ -242,21 +338,7 @@ const Carta: React.FC<CartaProps> = ({ showCarta, audioElement, isMuted, setIsMu
         </button>
 
         {/* Efecto de brillo */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-200/20 to-transparent animate-shimmer rounded-[2rem] sm:rounded-[2.5rem] lg:rounded-[3rem]"></div>
-      </div>
-
-      {/* Flores del fondo - solo en pantallas grandes */}
-      <div className="absolute -top-8 -left-8 opacity-15 animate-float hidden lg:block">
-        <FlorRosada size={80} />
-      </div>
-      <div className="absolute -top-12 -right-12 opacity-15 animate-float delay-300 hidden lg:block">
-        <FlorAmarilla size={70} />
-      </div>
-      <div className="absolute -bottom-12 -left-12 opacity-15 animate-float delay-600 hidden xl:block">
-        <FlorAmarilla size={75} />
-      </div>
-      <div className="absolute -bottom-8 -right-8 opacity-15 animate-float delay-900 hidden lg:block">
-        <FlorRosada size={65} />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-200/20 to-transparent animate-shimmer rounded-2xl md:rounded-3xl"></div>
       </div>
     </div>
   );
