@@ -1,24 +1,29 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import FlorAmarilla from './FlorAmarilla';
-import FlorRosada from './FlorRosada';
-import Carta from './Carta';
-import { PERSONALIZATION } from '../types/contants';
+import { useState, useEffect } from "react";
+import FlorAmarilla from "./FlorAmarilla";
+import FlorRosada from "./FlorRosada";
+import Carta from "./Carta";
+import { PERSONALIZATION } from "../types/contants";
 
 const Presentacion = () => {
   const [flowersHidden, setFlowersHidden] = useState<number[]>([]);
   const [showCarta, setShowCarta] = useState(false);
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
   const [audioPlaying, setAudioPlaying] = useState(false);
-  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(
+    null
+  );
   const [isMuted, setIsMuted] = useState(false);
 
   // Detectar dispositivos móviles en la primera carga
   useEffect(() => {
     const detectMobile = () => {
       const userAgent = navigator.userAgent;
-      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+      const isMobileDevice =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          userAgent
+        );
       const isSmallScreen = window.innerWidth <= 768;
       return isMobileDevice || isSmallScreen;
     };
@@ -32,15 +37,17 @@ const Presentacion = () => {
       setIsMobile(newIsMobile);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // No renderizar hasta que sepamos el tipo de dispositivo
   if (isMobile === null) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-sky-400 via-sky-300 to-green-200 flex items-center justify-center">
-        <div className="text-white text-2xl">{PERSONALIZATION.extraMessages.loading}</div>
+        <div className="text-white text-2xl">
+          {PERSONALIZATION.extraMessages.loading}
+        </div>
       </div>
     );
   }
@@ -48,30 +55,45 @@ const Presentacion = () => {
   // 20 flores amarillas + 5 flores rosadas con posiciones en bordes y tamaños diversos
   const baseFlowerData = [
     // Flores amarillas - Bordes superiores e inferiores
-    { x: 2, y: 8, size: 180, type: 'yellow' }, { x: 98, y: 5, size: 60, type: 'yellow' }, { x: 15, y: 2, size: 140, type: 'yellow' },
-    { x: 85, y: 95, size: 200, type: 'yellow' }, { x: 45, y: 98, size: 80, type: 'yellow' }, { x: 72, y: 3, size: 160, type: 'yellow' },
+    { x: 2, y: 8, size: 180, type: "yellow" },
+    { x: 98, y: 5, size: 60, type: "yellow" },
+    { x: 15, y: 2, size: 140, type: "yellow" },
+    { x: 85, y: 95, size: 200, type: "yellow" },
+    { x: 45, y: 98, size: 80, type: "yellow" },
+    { x: 72, y: 3, size: 160, type: "yellow" },
 
     // Flores amarillas - Bordes izquierdo y derecho
-    { x: 1, y: 25, size: 120, type: 'yellow' }, { x: 99, y: 75, size: 90, type: 'yellow' }, { x: 3, y: 60, size: 175, type: 'yellow' },
-    { x: 97, y: 35, size: 110, type: 'yellow' }, { x: 2, y: 85, size: 50, type: 'yellow' }, { x: 98, y: 50, size: 195, type: 'yellow' },
+    { x: 1, y: 25, size: 120, type: "yellow" },
+    { x: 99, y: 75, size: 90, type: "yellow" },
+    { x: 3, y: 60, size: 175, type: "yellow" },
+    { x: 97, y: 35, size: 110, type: "yellow" },
+    { x: 2, y: 85, size: 50, type: "yellow" },
+    { x: 98, y: 50, size: 195, type: "yellow" },
 
     // Flores amarillas - Centro caótico
-    { x: 25, y: 40, size: 70, type: 'yellow' }, { x: 65, y: 30, size: 150, type: 'yellow' }, { x: 35, y: 70, size: 100, type: 'yellow' },
-    { x: 55, y: 55, size: 85, type: 'yellow' }, { x: 40, y: 25, size: 135, type: 'yellow' }, { x: 75, y: 65, size: 45, type: 'yellow' },
+    { x: 25, y: 40, size: 70, type: "yellow" },
+    { x: 65, y: 30, size: 150, type: "yellow" },
+    { x: 35, y: 70, size: 100, type: "yellow" },
+    { x: 55, y: 55, size: 85, type: "yellow" },
+    { x: 40, y: 25, size: 135, type: "yellow" },
+    { x: 75, y: 65, size: 45, type: "yellow" },
 
     // Flores amarillas - Esquinas
-    { x: 8, y: 12, size: 165, type: 'yellow' }, { x: 88, y: 88, size: 75, type: 'yellow' },
+    { x: 8, y: 12, size: 165, type: "yellow" },
+    { x: 88, y: 88, size: 75, type: "yellow" },
 
     // Flores rosadas - Posiciones estratégicas
-    { x: 20, y: 15, size: 130, type: 'pink' }, { x: 80, y: 20, size: 95, type: 'pink' },
-    { x: 12, y: 75, size: 145, type: 'pink' }, { x: 90, y: 65, size: 110, type: 'pink' },
-    { x: 50, y: 45, size: 125, type: 'pink' }
+    { x: 20, y: 15, size: 130, type: "pink" },
+    { x: 80, y: 20, size: 95, type: "pink" },
+    { x: 12, y: 75, size: 145, type: "pink" },
+    { x: 90, y: 65, size: 110, type: "pink" },
+    { x: 50, y: 45, size: 125, type: "pink" },
   ];
 
   // Aplicar reducción de 40% para móviles (solo se calcula una vez)
-  const flowerData = baseFlowerData.map(flower => ({
+  const flowerData = baseFlowerData.map((flower) => ({
     ...flower,
-    size: isMobile ? Math.round(flower.size * 0.6) : flower.size
+    size: isMobile ? Math.round(flower.size * 0.6) : flower.size,
   }));
 
   const handleFlowerClick = () => {
@@ -79,13 +101,13 @@ const Presentacion = () => {
     if (flowersHidden.length > 0 || audioPlaying) return;
 
     // Reproducir audio en bucle
-    const audio = new Audio('/sounds/flores_amarillas.mp3');
+    const audio = new Audio("/sounds/flores_amarillas.mp3");
     audio.loop = true; // Hacer que se repita en bucle
     setAudioPlaying(true);
     setAudioElement(audio); // Guardar referencia del audio
 
-    audio.play().catch(error => {
-      console.log('Error al reproducir audio:', error);
+    audio.play().catch((error) => {
+      console.log("Error al reproducir audio:", error);
     });
 
     // Caída escalonada por grupos
@@ -97,12 +119,12 @@ const Presentacion = () => {
       [6, 7, 8, 9, 10, 11], // Segundo grupo - bordes laterales amarillas
       [12, 13, 14, 15, 16, 17], // Tercer grupo - centro amarillas
       [18, 19, 20, 21], // Cuarto grupo - esquinas amarillas + primeras rosadas
-      [22, 23, 24] // Quinto grupo - últimas flores rosadas
+      [22, 23, 24], // Quinto grupo - últimas flores rosadas
     ];
 
     groups.forEach((group, groupIndex) => {
       setTimeout(() => {
-        setFlowersHidden(prev => [...prev, ...group]);
+        setFlowersHidden((prev) => [...prev, ...group]);
       }, groupIndex * 640); // 640ms entre cada grupo (20% menos que 800ms)
     });
 
@@ -118,9 +140,13 @@ const Presentacion = () => {
       onClick={handleFlowerClick}
     >
       {/* Título de guía mejorado */}
-      <div className={`absolute inset-0 flex items-center justify-center z-20 transition-opacity duration-1000 ${
-        flowersHidden.length > 0 ? 'opacity-0 pointer-events-none' : 'opacity-100'
-      }`}>
+      <div
+        className={`absolute inset-0 flex items-center justify-center z-20 transition-opacity duration-1000 ${
+          flowersHidden.length > 0
+            ? "opacity-0 pointer-events-none"
+            : "opacity-100"
+        }`}
+      >
         <div className="relative group cursor-pointer transform transition-all duration-300 hover:scale-105 active:scale-95">
           {/* Efecto de resplandor */}
           <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-400 to-rose-400 rounded-2xl blur-xl opacity-75 group-hover:opacity-100 animate-pulse"></div>
@@ -168,10 +194,12 @@ const Presentacion = () => {
 
         // Diferentes animaciones según el tipo y posición
         const getAnimationClass = () => {
-          if (flower.type === 'pink') {
-            return index % 2 === 0 ? 'animate-petal-dance' : 'animate-gentle-sway';
+          if (flower.type === "pink") {
+            return index % 2 === 0
+              ? "animate-petal-dance"
+              : "animate-gentle-sway";
           } else {
-            return index % 3 === 0 ? 'animate-float' : 'animate-gentle-sway';
+            return index % 3 === 0 ? "animate-float" : "animate-gentle-sway";
           }
         };
 
@@ -179,33 +207,30 @@ const Presentacion = () => {
           <div
             key={index}
             className={`absolute transition-all ease-out pointer-events-none ${getAnimationClass()} ${
-              isHidden
-                ? 'translate-y-[120vh] opacity-0'
-                : ''
+              isHidden ? "translate-y-[120vh] opacity-0" : ""
             }`}
             style={{
               left: `${flower.x}%`,
               top: `${flower.y}%`,
+              // CORRECCIÓN: Mantener siempre el mismo transform como base
               transform: isHidden
-                ? `translate(-50%, -50%) rotate(${180 + index * 45}deg)`
-                : 'translate(-50%, -50%)',
+                ? `translate(-50%, -50%) translateY(120vh) rotate(${
+                    180 + index * 45
+                  }deg)`
+                : "translate(-50%, -50%)",
               zIndex: isHidden ? 1 : 10,
-              transitionDuration: isHidden ? '3500ms' : '300ms',
-              transitionTimingFunction: isHidden ? 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'ease-out',
+              transitionDuration: isHidden ? "3500ms" : "300ms",
+              transitionTimingFunction: isHidden
+                ? "cubic-bezier(0.25, 0.46, 0.45, 0.94)"
+                : "ease-out",
               animationDelay: `${index * 0.15}s`,
-              animationDuration: `${4 + (index % 4)}s`
+              animationDuration: `${4 + (index % 4)}s`,
             }}
           >
-            {flower.type === 'yellow' ? (
-              <FlorAmarilla
-                size={flower.size}
-                delay={index * 0.01}
-              />
+            {flower.type === "yellow" ? (
+              <FlorAmarilla size={flower.size} delay={index * 0.01} />
             ) : (
-              <FlorRosada
-                size={flower.size}
-                delay={index * 0.01}
-              />
+              <FlorRosada size={flower.size} delay={index * 0.01} />
             )}
           </div>
         );
