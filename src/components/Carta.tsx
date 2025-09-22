@@ -10,15 +10,24 @@ interface CartaProps {
   audioElement: HTMLAudioElement | null;
   isMuted: boolean;
   setIsMuted: (muted: boolean) => void;
+  onRestart?: () => void;
 }
 
-const Carta: React.FC<CartaProps> = ({ showCarta, audioElement, isMuted, setIsMuted }) => {
+const Carta: React.FC<CartaProps> = ({ showCarta, audioElement, isMuted, setIsMuted, onRestart }) => {
   if (!showCarta) return null;
 
   const toggleMute = () => {
     if (audioElement) {
       audioElement.muted = !isMuted;
       setIsMuted(!isMuted);
+    }
+  };
+
+  const handleRestart = () => {
+    if (onRestart) {
+      onRestart();
+    } else {
+      window.location.reload();
     }
   };
 
@@ -144,6 +153,37 @@ const Carta: React.FC<CartaProps> = ({ showCarta, audioElement, isMuted, setIsMu
             </div>
           </div>
         </div>
+
+        {/* Botón de reinicio */}
+        <button
+          onClick={handleRestart}
+          className="absolute top-4 left-4 sm:top-6 sm:left-6 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full p-3 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95 z-20"
+          aria-label="Reiniciar aplicación"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-rose-600"
+          >
+            <path
+              d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M3 3v5h5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
 
         {/* Botón de mute/unmute */}
         <button

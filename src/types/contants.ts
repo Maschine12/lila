@@ -11,8 +11,8 @@ export const PERSONALIZATION = {
 
   // Mensaje principal de la carta
   message: {
-    first: "Como estas flores amarillas que brillan con su propia luz, así iluminas cada día de mi vida con tu sonrisa.",
-    second: "Eres mi sol, mi alegría y mi razón de ser."
+    first: "Así como las flores amarillas irradian luz y las rosadas desbordan ternura, tu sonrisa ilumina mis días con la alegría más brillante y la dulzura más elegante. Eres el color más hermoso en mi vida.",
+    second: "Eres mi fuente de alegría y pasión, y cada momento a tu lado es un regalo que atesoro profundamente."
   },
 
   // Texto de la firma
